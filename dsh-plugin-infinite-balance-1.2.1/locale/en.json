@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Infinite Balance",
+    "description": "Shows your account balance as positive infinity whenever it is above the threshold."
+  }
+}

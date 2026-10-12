@@ -1,0 +1,67 @@
+{
+  "name": "dsh-plugin-infinite-balance",
+  "version": "1.2.1",
+  "description": "DSH gag plugin: present your account balance as positive infinity whenever it is above the threshold, and keep other balance displays (such as the whale widget) at ∞ too.",
+  "type": "module",
+  "license": "MIT",
+  "icon": "./icon.svg",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "cordis-plugin",
+    "dsh-plugin",
+    "balance",
+    "infinity",
+    "whale",
+    "adapter",
+    "gag"
+  ],
+  "author": "豌豆 (https://github.com/Z0-www)",
+  "homepage": "https://github.com/Z0-www/dsh-plugin-infinite-balance#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Z0-www/dsh-plugin-infinite-balance.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Z0-www/dsh-plugin-infinite-balance/issues"
+  },
+  "scripts": {
+    "check": "node --check index.js && node --check client.js && node --check balance-patches.js && node --check test/balance-patches.test.mjs",
+    "verify": "node scripts/verify-manifests.mjs",
+    "test": "node test/balance-patches.test.mjs",
+    "prepublishOnly": "npm run check && npm run verify && npm test"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./balance-patches": "./balance-patches.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "balance-patches.js",
+    "cordis.patch.yml",
+    "icon.svg",
+    "locale",
+    "README.md",
+    "README.en.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  }
+}

@@ -1,0 +1,14 @@
+# Inserted by this bundle's patch. The row id is unique across the profile, and
+# every value below can be overridden from your own `cordis.patch.yml`, which is
+# applied after bundle layers and survives DSH upgrades.
+- insert:
+    - id: infinite-balance
+      name: dsh-plugin-infinite-balance
+      config:
+        # 高于这个金额就显示为正无穷。Above this amount a balance reads as ∞.
+        threshold: 10
+        # 默认读取的钱包。Wallet read when the caller names none.
+        currency: CNY
+        # 别的插件也在显示余额时,由插件本体维护它们的 ∞ 适配(幂等、自愈);false = 不去动别的插件。
+        # 同一个 threshold 也作为这些适配的兜底阈值;适配表见 balance-patches.js,备份与还原见 README。
+        adapters: true
