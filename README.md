@@ -194,4 +194,4 @@ Everything Time-Zone Lockdown's audit reads is something any web page can alread
 
 ## License
 
-MIT © 豌豆 ([z0-www](https://github.com/z0-www)). Each plugin ships its own `LICENSE` file — [`dsh-plugin-infinite-balance-1.2.1/LICENSE`](dsh-plugin-infinite-balance-1.2.1/LICENSE) here, and `LICENSE` inside the zip for Time-Zone Lockdown.
+ ([z0-www](https://github.com/z0-www)). Each plugin ships its own `LICENSE` file — [`dsh-plugin-infinite-balance-1.2.1/LICENSE`](dsh-plugin-infinite-balance-1.2.1/LICENSE) here, and `LICENSE` inside the zip for Time-Zone Lockdown.
