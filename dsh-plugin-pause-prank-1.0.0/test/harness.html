@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>暂停整活 · 本地预览</title>
+<style>
+  :root { color-scheme: light; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #eef1f6;
+    color: #1f2329;
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+  }
+  .page { max-width: 780px; margin: 0 auto; padding: 36px 20px 70px; }
+  h1 { margin: 0 0 8px; font-size: 20px; }
+  .hint { color: #6b7280; font-size: 12px; line-height: 1.7; margin: 0 0 20px; }
+  .hint code { background: #e6eaf1; border-radius: 4px; padding: 1px 5px; }
+  .msg { background: #fff; border: 1px solid #e6e8ee; border-radius: 12px; padding: 14px 16px; margin: 12px 0; }
+  .counter { font-weight: 600; }
+  .composer {
+    position: sticky;
+    bottom: 16px;
+    margin-top: 28px;
+    background: #fff;
+    border: 1px solid #dde1e8;
+    border-radius: 14px;
+    padding: 12px;
+    box-shadow: 0 8px 24px rgba(20, 30, 60, 0.06);
+  }
+  .fake-input { min-height: 44px; display: flex; align-items: center; padding: 0 6px; color: #9aa1ab; }
+  .row { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 8px; }
+  .row button { font: inherit; border-radius: 8px; border: 1px solid #d5d9e0; background: #fff; padding: 6px 12px; cursor: pointer; }
+  .row .primary { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; background: #2563eb; border-color: #2563eb; color: #fff; }
+  .log {
+    margin-top: 22px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #0f141b;
+    color: #c9d4e3;
+    font: 12px/1.7 ui-monospace, Consolas, monospace;
+    white-space: pre-wrap;
+    min-height: 44px;
+  }
+</style>
+<script>
+  // 模拟宿主 index-inject 写进来的初值。
+  window.__DSH_PAUSE_PRANK__ = {
+    enabled: true,
+    imageUrl: new URLSearchParams(location.search).has('noimg') ? '../assets/__missing__.png' : '../assets/persona.png',
+    imageAlt: 'DeepSeek 娘',
+    kicker: '🐟 大肥鱼食堂 · 暂停确认',
+    title: '真的要说再见吗？',
+    subtitle: '这一轮才刚开始，白饭还没吃完呢……',
+    complainToast: '已记录你的不满，并转交给了大肥鱼 🐟',
+    debug: true,
+  }
+  window.__DPP_LOGS__ = []
+  window.__DPP_STOP_COUNT__ = 0
+  // 预览页要能用 element.click() 模拟用户点击(真实页面只认 isTrusted 的点击)。
+  window.__DSH_PAUSE_PRANK_TEST__ = true
+  window.__ModuleLoader__ = {
+    load(definition) {
+      window.__dppDef = definition
+    },
+  }
+  function log(text) {
+    window.__DPP_LOGS__.push(text)
+    const element = document.getElementById('log')
+    if (element !== null) element.textContent = window.__DPP_LOGS__.join('\n')
+  }
+</script>
+</head>
+<body>
+  <div class="page">
+    <h1>暂停整活 · 本地预览</h1>
+    <p class="hint">
+      这里模拟 DSH 的输入框:<code>[data-composer-card]</code> 里有一颗
+      <code>aria-label="停止生成"</code> 的方块按钮。正常点它会 +1;插件应该先弹窗,
+      点「残忍结束」→ 大按钮「再见」只是继续,点再小的「狠心结束」才 +1。
+    </p>
+    <div class="msg">这是一个假的会话。点下面的暂停按钮试试。</div>
+    <div class="msg">
+      真·停止计数:<span class="counter" id="stop-count">0</span>
+      ·  弹窗:<span class="counter" id="dialog-state">关</span>
+    </div>
+
+    <div class="composer" data-composer-card>
+      <div class="fake-input">给 DeepSeek 发消息…(假输入框)</div>
+      <div class="row">
+        <button type="button" aria-label="发送">发送</button>
+        <button type="button" class="primary" id="stop" aria-label="停止生成" title="真的会停">
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+            <rect x="3" y="3" width="10" height="10" rx="3" fill="currentColor" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="log" id="log"></div>
+  </div>
+
+<script src="../client.js"></script>
+<script>
+  (() => {
+    const stop = document.getElementById('stop')
+    stop.addEventListener('click', () => {
+      window.__DPP_STOP_COUNT__ += 1
+      document.getElementById('stop-count').textContent = String(window.__DPP_STOP_COUNT__)
+      log(`真·停止被调用(#${window.__DPP_STOP_COUNT__})`)
+    })
+
+    const definition = window.__dppDef
+    if (definition === undefined) {
+      log('client.js 没有注册模块')
+      return
+    }
+    const moduleExports = definition.factory(() => {
+      throw new Error('预览页没有模块表')
+    })
+    const mount = () => moduleExports.apply({
+      effect: (fn) => {
+        const dispose = fn()
+        return dispose
+      },
+    })
+    mount()
+    // ?double=1 / ?selftest=1:模拟"同一个 bundle 被热更新再 apply 一次"的现场,
+    // 用来证明重复挂载不会变成两套监听器互相弹窗。
+    if (new URLSearchParams(location.search).has('double') || new URLSearchParams(location.search).has('selftest')) {
+      mount()
+      log('模拟重复挂载:同一页面 apply 了两次。')
+    }
+    log('插件已挂载:点停止按钮试试。')
+
+    new MutationObserver(() => {
+      const open = document.querySelector('[data-dsh-pause-prank="dialog"]') !== null
+      document.getElementById('dialog-state').textContent = open ? '开' : '关'
+    }).observe(document.body, { childList: true })
+
+    // 截图/自动演示:?open=1 直接点一下停止按钮;?open=1&cruel=1 再翻到第二页。
+    if (new URLSearchParams(location.search).has('open')) {
+      const params = new URLSearchParams(location.search)
+      setTimeout(() => {
+        stop.click()
+        if (params.has('cruel')) {
+          setTimeout(() => document.querySelector('[data-act="cruel"]')?.click(), 120)
+        }
+      }, 80)
+    }
+
+    // 对齐热区:?outline=1 给透明热区描边,截图里能看出按钮对没对准。
+    if (new URLSearchParams(location.search).has('outline')) {
+      const style = document.createElement('style')
+      style.textContent = '.dpp-hit { outline: 1px dashed #e11d48; background: rgba(225, 29, 72, 0.1); }'
+      document.head.appendChild(style)
+    }
+    // 自动自检:?selftest=1 跑一遍四条路径,结果写进标题与日志。
+    if (new URLSearchParams(location.search).has('selftest')) {
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+      const dialogOpen = () => document.querySelector('[data-dsh-pause-prank="dialog"]') !== null
+      const check = (name, ok, detail) => log(`${ok ? '✓' : '✗'} ${name}${detail === undefined ? '' : ` · ${detail}`}`)
+      void (async () => {
+        await sleep(150)
+        stop.click()
+        await sleep(80)
+        check(
+          '点暂停先弹窗、不停止',
+          dialogOpen() && window.__DPP_STOP_COUNT__ === 0
+            && document.querySelectorAll('[data-dsh-pause-prank="dialog"]').length === 1,
+        )
+        check(
+          '标题与立绘都在',
+          document.querySelector('.dpp-title')?.textContent === '真的要说再见吗？'
+            && document.querySelector('.dpp-art')?.getAttribute('src') === '../assets/persona.png',
+        )
+
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+        await sleep(50)
+        check('Esc 关闭且不停止', dialogOpen() === false && window.__DPP_STOP_COUNT__ === 0)
+
+        stop.click()
+        await sleep(50)
+        document.querySelector('[data-act="think"]').click()
+        await sleep(50)
+        check('「再想想」关闭且不停止', dialogOpen() === false && window.__DPP_STOP_COUNT__ === 0)
+
+        stop.click()
+        await sleep(50)
+        // 第一页「残忍结束」→ 翻到第二页
+        document.querySelector('[data-act="cruel"]').click()
+        await sleep(80)
+        const goodbye = document.querySelector('[data-act="goodbye"]')
+        const end = document.querySelector('[data-act="end"]')
+        check(
+          '「残忍结束」翻到第二页',
+          dialogOpen() === true
+            && goodbye !== null && end !== null
+            && document.querySelector('.dpp-subtitle')?.textContent === '要把大肥鱼一个人留在这里吗？',
+        )
+
+        // 特别大的「再见」= 对话继续,不停止
+        goodbye.click()
+        await sleep(80)
+        check('大按钮「再见」让对话继续', dialogOpen() === false && window.__DPP_STOP_COUNT__ === 0)
+
+        // 再走一遍,点极小的「狠心结束」才真的停
+        stop.click()
+        await sleep(50)
+        document.querySelector('[data-act="cruel"]').click()
+        await sleep(80)
+        document.querySelector('[data-act="end"]').click()
+        await sleep(120)
+        check('小按钮「狠心结束」真的停止', dialogOpen() === false && window.__DPP_STOP_COUNT__ === 1)
+        await sleep(300)
+        check('停止之后不再反弹出弹窗', dialogOpen() === false && window.__DPP_STOP_COUNT__ === 1)
+
+        const failed = window.__DPP_LOGS__.filter((line) => line.includes('✗')).length
+        document.title = failed === 0 ? 'SELFTEST-PASS' : 'SELFTEST-FAIL'
+        log(document.title)
+      })()
+    }
+  })()
+</script>
+</body>
+</html>

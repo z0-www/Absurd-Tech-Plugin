@@ -1,0 +1,68 @@
+{
+  "name": "dsh-plugin-pause-prank",
+  "displayName": "更差的暂停",
+  "version": "1.0.0",
+  "description": "更差的暂停（An Even Worse Pause）—— DSH 暂停整活插件：点「停止生成」不会停，而是弹出大肥鱼拟人确认；「残忍结束」后的巨大「再见」其实让对话继续，只有极小的「狠心结束」才真的停。立绘可换、文案可配、零依赖。",
+  "type": "module",
+  "license": "MIT",
+  "author": "豌豆 (z0-www)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/z0-www/Absurd-Tech-Plugin.git",
+    "directory": "dsh-plugin-pause-prank-1.0.0"
+  },
+  "homepage": "https://github.com/z0-www/Absurd-Tech-Plugin/tree/main/dsh-plugin-pause-prank-1.0.0#readme",
+  "bugs": {
+    "url": "https://github.com/z0-www/Absurd-Tech-Plugin/issues"
+  },
+  "icon": "./icon.svg",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "cordis-plugin",
+    "dsh-plugin",
+    "prank",
+    "gag",
+    "pause",
+    "stop",
+    "dialog",
+    "worse-pause",
+    "an-even-worse-pause"
+  ],
+  "scripts": {
+    "check": "node --check index.js && node --check client.js && node --check test/host.test.mjs && node --check test/pure.test.mjs",
+    "test": "node test/host.test.mjs && node test/pure.test.mjs"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "icon.svg",
+    "assets",
+    "docs",
+    "test",
+    "README.md",
+    "README.en.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

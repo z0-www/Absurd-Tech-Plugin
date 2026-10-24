@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: An Even Worse Pause
+        working-directory: dsh-plugin-pause-prank-1.0.0
+        run: |
+          node --check index.js
+          node --check client.js
+          node test/host.test.mjs
+          node test/pure.test.mjs
+      - name: Infinite Balance
+        working-directory: dsh-plugin-infinite-balance-1.2.1
+        run: node test/balance-patches.test.mjs

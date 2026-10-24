@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="暂停整活">
+  <rect width="64" height="64" rx="14" fill="#E9F1FF"/>
+  <circle cx="32" cy="29" r="15" fill="#A9C6F5"/>
+  <path d="M24.5 26.5c1.4-2.4 4-3.4 6.2-2.2" fill="none" stroke="#6C87B8" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M39.5 26.5c-1.4-2.4-4-3.4-6.2-2.2" fill="none" stroke="#6C87B8" stroke-width="2.6" stroke-linecap="round"/>
+  <ellipse cx="26.6" cy="33.6" rx="1.8" ry="2.6" fill="#55729F"/>
+  <ellipse cx="37.4" cy="33.6" rx="1.8" ry="2.6" fill="#55729F"/>
+  <path d="M27.5 40.6c1.6-2.1 7.4-2.1 9 0" fill="none" stroke="#55729F" stroke-width="2.2" stroke-linecap="round"/>
+  <rect x="20" y="52" width="24" height="6" rx="3" fill="#2563EB"/>
+</svg>

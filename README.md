@@ -1,21 +1,21 @@
-[README.md](https://github.com/user-attachments/files/33345369/README.md)
 # Absurd Tech Plugins
 
 > A bunch of unhinged `dsh` plugins I made. They're absurd, they're cursed, and now they're on GitHub.
 
-Two plugins for **DSH (DeepSeek Harness)**, both of them real, working bundles and both of them jokes. Neither one has any practical use. Each is a Host + Client bundle with **zero runtime dependencies**, no `@deepseek-ai/*` imports and no build step.
+Three plugins for **DSH (DeepSeek Harness)**, all of them real, working bundles and all of them jokes. None of them has any practical use. Each is a Host + Client bundle with **zero runtime dependencies**, no `@deepseek-ai/*` imports and no build step.
 
 | Plugin | Version | What it does | In this repo |
 |---|---|---|---|
 | **[Time-Zone Lockdown](#time-zone-lockdown)** | 1.7.0 | When the browser's time zone is in China, the whole harness is covered by a fake "your account has been restored" letter, and only the two doors in its footer let it go. | `dsh-plugin-cn-prank-1.7.0.zip` |
 | **[Infinite Balance](#infinite-balance)** | 1.2.1 | Any balance above the threshold is presented as **∞** — in the UI, to the model, and inside other plugins that display it. | `dsh-plugin-infinite-balance-1.2.1/` |
+| **[An Even Worse Pause](#an-even-worse-pause)** | 1.0.0 | Clicking the stop button opens a cute persona confirmation; its "cruel ending" hides a second page where a giant "goodbye" continues the turn and only a tiny "cruel end" really stops it. | `dsh-plugin-pause-prank-1.0.0/` |
 
 ## Read this first
 
-- **These are prank plugins.** The "suspension notice" is a forged image, and "the Humanitarian Association's Safeguard Team" does not exist. Neither plugin suspends an account, uploads anything, or writes persistent state.
+- **These are prank plugins.** The "suspension notice" is a forged image, and "the Humanitarian Association's Safeguard Team" does not exist. None of these plugins suspends an account, uploads anything, or writes persistent state.
 - **Do not install Time-Zone Lockdown on somebody else's machine.** It is designed to be annoying on purpose; that is a decision its owner gets to make, not their colleague.
 - **Both halves run code inside your DSH.** Time-Zone Lockdown's source ships inside the zip — read it before you install anything.
-- **Nothing here phones home.** Neither plugin makes a network request; there is no `fetch`, `XMLHttpRequest` or `WebSocket` in either Client half.
+- **Nothing here phones home.** None of the plugins makes a network request; there is no `fetch`, `XMLHttpRequest` or `WebSocket` in any Client half.
 - **Not affiliated with DeepSeek or Anthropic.** Community fan work, no official position implied.
 
 ---
@@ -126,9 +126,53 @@ node balance-patches.js --revert          # restore the pristine files
 
 ---
 
+## An Even Worse Pause
+
+<img src="dsh-plugin-pause-prank-1.0.0/docs/preview-dialog.png" alt="The first page of the pause dialog" width="620">
+
+*The stop button does not stop on the first click. The whale girl asks "really say goodbye?" — the portrait is the same one the other plugins use.*
+
+Hitting the composer's stop button while a turn is running gives you a two-stage fake-out. The small print is the joke:
+
+| Choice | What really happens |
+|---|---|
+| **再想想** (think again) | Closes the dialog; **the turn keeps running.** |
+| **残忍结束** (cruel ending) | Does not end anything — it flips to the second page. |
+| **我要吐槽** (complain) | Shows a toast. Nothing stops. |
+| **Esc** | Closes the dialog; nothing stops. |
+
+The second page is the actual trap:
+
+<img src="dsh-plugin-pause-prank-1.0.0/docs/preview-stage2.png" alt="The second page: a giant goodbye and a tiny cruel end" width="620">
+
+- the **giant 再见 ("goodbye")** button closes the dialog and **lets the turn continue**;
+- the **tiny 狠心结束 ("cruel end")** link is the only thing that actually stops — it re-dispatches the click to DSH's real stop button.
+
+**The portrait is hot-swappable.** The Host half serves `assets/persona.png` at
+`/dsh-pause-prank/image` and re-reads it on every open, so replacing the file (or pointing
+`imagePath` somewhere else) takes effect on the next pause — no restart. The bubble copy
+(`title`, `subtitle`, `cruelSubtitle`, `kicker`) and the complaint toast are config fields.
+If the picture is missing, the dialog falls back to a light-blue 🐟 placeholder and the
+buttons still work.
+
+```powershell
+# what the Host half resolved, and whether the file is there
+curl http://127.0.0.1:19387/dsh-pause-prank/status
+```
+
+The full manual — behaviour, configuration table, self-check routes and the DOM technique —
+is [`dsh-plugin-pause-prank-1.0.0/README.en.md`](dsh-plugin-pause-prank-1.0.0/README.en.md)
+(Chinese: [`README.md`](dsh-plugin-pause-prank-1.0.0/README.md)).
+
+> It never touches the session or the model: the Client half intercepts the click in the
+> capture phase, and only the tiny "cruel end" re-dispatches it to the native button, so the
+> real cancel logic still runs inside DSH.
+
+---
+
 ## Install
 
-Ask the Agent inside DSH to run `install_bundle`. `target` accepts an **absolute local path**, a git address, a tarball or an npm package name; **relative paths are refused.** `install_bundle` performs the package installation and bundle selection itself, so never hand-edit the profile's `package.json` or `cordis.patch.yml`.
+Ask the Agent inside DSH to run `install_bundle`. `target` accepts an **absolute local path**, a git address, a tarball or an npm package name; **relative paths are refused.** `install_bundle` performs the package installation and bundle selection itself, so never hand-edit the profile's `package.json` or `cordis.patch.yml`. A local-path install is recorded as a pnpm `link:` — the plugin keeps running from that folder, so **install from a path you intend to keep**, and do not move or delete it afterwards.
 
 ### 1 · Time-Zone Lockdown
 
@@ -158,40 +202,66 @@ plugin_manager { "action": "install_bundle", "target": "C:\\path\\to\\dsh-plugin
 plugin_manager { "action": "remove_bundle", "target": "dsh-plugin-infinite-balance" }
 ```
 
+### 3 · An Even Worse Pause
+
+The source folder ships unpacked in this repository, so point `target` straight at it:
+
+```jsonc
+plugin_manager { "action": "install_bundle", "target": "C:\\path\\to\\dsh-plugin-pause-prank-1.0.0" }
+```
+
+```jsonc
+// uninstall
+plugin_manager { "action": "remove_bundle", "target": "dsh-plugin-pause-prank" }
+```
+
+The folder also carries `dsh-plugin-pause-prank-1.0.0.tgz` if you would rather install from a
+tarball than from the unpacked directory.
+
 A new bundle usually activates through HMR; if the plugin page reports `restart-required`, restart DSH. Code changes to a Host half only take effect after a **restart** — toggling the bundle off and on is not enough.
 
-> The two plugin manuals also offer a `github:Z0-www/dsh-plugin-cn-prank` / `github:Z0-www/dsh-plugin-infinite-balance` install target. Those standalone repositories are **not published**, so use the files in this repository, as above.
+> The two older plugin manuals also offer a `github:Z0-www/dsh-plugin-cn-prank` / `github:Z0-www/dsh-plugin-infinite-balance` install target. Those standalone repositories are **not published**, so use the files in this repository, as above. An Even Worse Pause installs from this repository only.
 
 ## What's in this repository
 
 ```
 .
 ├─ README.md                            # this page
+├─ docs/                                # screenshots used by the Time-Zone Lockdown section
 ├─ dsh-plugin-cn-prank-1.7.0.zip        # full plugin: index.js, client.js, assets, docs, both manuals
-└─ dsh-plugin-infinite-balance-1.2.1/
+├─ dsh-plugin-infinite-balance-1.2.1/
+│  ├─ index.js / client.js              # the two halves
+│  ├─ balance-patches.js                # other plugins' balance displays
+│  ├─ cordis.patch.yml                  # every option and its default
+│  ├─ locale/{zh,en}.json               # Plugin Manager display text
+│  ├─ scripts/verify-manifests.mjs      # manifest self-check
+│  ├─ test/balance-patches.test.mjs     # acceptance suite
+│  ├─ README.md / README.en.md          # full manual, Chinese and English
+│  ├─ dsh-plugin-infinite-balance-1.2.1.tgz   # the same plugin, packed
+│  └─ CHANGELOG.md / LICENSE
+└─ dsh-plugin-pause-prank-1.0.0/
    ├─ index.js / client.js              # the two halves
-   ├─ balance-patches.js                # other plugins' balance displays
+   ├─ assets/persona.png                # default portrait, replace me
    ├─ cordis.patch.yml                  # every option and its default
-   ├─ locale/{zh,en}.json               # Plugin Manager display text
-   ├─ scripts/verify-manifests.mjs      # manifest self-check
-   ├─ test/balance-patches.test.mjs     # acceptance suite
+   ├─ docs/                             # screenshots
+   ├─ test/                             # Host + Client tests and browser harness
    ├─ README.md / README.en.md          # full manual, Chinese and English
-   ├─ dsh-plugin-infinite-balance-1.2.1.tgz   # the same plugin, packed
+   ├─ dsh-plugin-pause-prank-1.0.0.tgz  # the same plugin, packed
    └─ CHANGELOG.md / LICENSE
 ```
 
-Both plugins are **MIT** licensed and each ships its own `LICENSE` file.
+All three plugins are **MIT** licensed and each ships its own `LICENSE` file.
 
 ## Requirements
 
-- A DSH build that provides the `plugin_manager` tool and the bundle seats these plugins use: `shell.overlay` (the frame-wide floating layer) for the letter, and `conversation.composer.dock` for the balance badge.
+- A DSH build that provides the `plugin_manager` tool and the points these plugins hook into: `shell.overlay` (the frame-wide floating layer) for the letter, `conversation.composer.dock` for the balance badge, and the composer's `[data-composer-card]` marker for the pause button.
 - No package installation, no build step, no runtime dependencies.
-- Both bundles deliberately declare **no `Config` schema** — importing `schemastery` is not resolvable from inside a third-party bundle, so the config form is empty on the plugin page by design. Override the row in your own `cordis.patch.yml` instead.
+- All three bundles deliberately declare **no `Config` schema** — importing `schemastery` is not resolvable from inside a third-party bundle, so the config form is empty on the plugin page by design. Override the row in your own `cordis.patch.yml` instead.
 
 ## Privacy
 
-Everything Time-Zone Lockdown's audit reads is something any web page can already read, and all of it stays on your machine. The scan reads the head of a file, counts CJK characters, and stores neither the bytes nor any copy of them; the popup shows a path and a count. Both switches live in memory only, so restarting DSH returns them to off. Infinite Balance reads your balance through the public Client Remote `ctx.remote.account.getBalance` — the same source the account page uses — and touches no other plugin's DOM.
+Everything Time-Zone Lockdown's audit reads is something any web page can already read, and all of it stays on your machine. The scan reads the head of a file, counts CJK characters, and stores neither the bytes nor any copy of them; the popup shows a path and a count. Both switches live in memory only, so restarting DSH returns them to off. Infinite Balance reads your balance through the public Client Remote `ctx.remote.account.getBalance` — the same source the account page uses — and touches no other plugin's DOM. An Even Worse Pause makes no request at all: its portrait route reads a local file only when the dialog opens, and nothing is stored.
 
 ## License
 
- ([z0-www](https://github.com/z0-www)). Each plugin ships its own `LICENSE` file — [`dsh-plugin-infinite-balance-1.2.1/LICENSE`](dsh-plugin-infinite-balance-1.2.1/LICENSE) here, and `LICENSE` inside the zip for Time-Zone Lockdown.
+MIT © 豌豆 ([z0-www](https://github.com/z0-www)). Each plugin ships its own `LICENSE` file — [`dsh-plugin-infinite-balance-1.2.1/LICENSE`](dsh-plugin-infinite-balance-1.2.1/LICENSE) here, `LICENSE` inside the zip for Time-Zone Lockdown, and [`dsh-plugin-pause-prank-1.0.0/LICENSE`](dsh-plugin-pause-prank-1.0.0/LICENSE) for An Even Worse Pause.

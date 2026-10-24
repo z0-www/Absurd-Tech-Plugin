@@ -1,0 +1,32 @@
+# 暂停整活 · 真的要说再见吗 的行。
+#
+# 这个文件由 bundle 的 patch 插进 profile 的 Loader 树;你自己的
+# `cordis.patch.yml` 会在这之后应用,所以这里的每一项都能在那边覆盖,
+# 而且 DSH 升级不会把它冲掉。
+#
+# 行 id 在全 profile 内唯一。
+- insert:
+    - id: pause-prank
+      name: dsh-plugin-pause-prank
+      config:
+        # 总开关。关掉只是不装拦截器,图片路由仍然在(方便先换图)。
+        enabled: true
+
+        # 弹窗里的立绘。
+        # 留空 = 包内 `assets/persona.png`(大肥鱼/DeepSeek 娘);也可以写绝对路径
+        # (`C:/Users/lin/Pictures/xxx.png`)或相对插件目录的路径(`../meme.png`)。
+        # 每次点暂停都会重新读盘,所以换图不用重启、不用刷新。
+        imagePath: ''
+
+        # 立绘加载失败时的占位标题,也是弹窗的无障碍名称。
+        imageAlt: 'DeepSeek 娘'
+
+        # 弹窗文案。都可以在这里改成你想说的。
+        kicker: '🐟 大肥鱼食堂 · 暂停确认'
+        title: '真的要说再见吗？'
+        subtitle: '这一轮才刚开始，白饭还没吃完呢……'
+        # 点「残忍结束」翻到第二页时,气泡里换成的这句。
+        cruelSubtitle: '要把大肥鱼一个人留在这里吗？'
+
+        # 点「我要吐槽」时弹的那句话。
+        complainToast: '已记录你的不满，并转交给了大肥鱼 🐟'
