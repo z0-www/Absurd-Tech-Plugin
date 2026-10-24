@@ -1,87 +1,78 @@
+English | [中文](README.zh.md)
+
 # Absurd Tech Plugins
 
 > A bunch of unhinged `dsh` plugins I made. They're absurd, they're cursed, and now they're on GitHub.
 
-Three plugins for **DSH (DeepSeek Harness)**, all of them real, working bundles and all of them jokes. None of them has any practical use. Each is a Host + Client bundle with **zero runtime dependencies**, no `@deepseek-ai/*` imports and no build step.
+Three real, working **DSH (DeepSeek Harness)** bundles. Each is a Host + Client pair with
+**zero runtime dependencies**, no `@deepseek-ai/*` imports and no build step. None of them has
+any practical use.
 
-| Plugin | Version | What it does | In this repo |
-|---|---|---|---|
-| **[Time-Zone Lockdown](#time-zone-lockdown)** | 1.7.0 | When the browser's time zone is in China, the whole harness is covered by a fake "your account has been restored" letter, and only the two doors in its footer let it go. | `dsh-plugin-cn-prank-1.7.0.zip` |
-| **[Infinite Balance](#infinite-balance)** | 1.2.1 | Any balance above the threshold is presented as **∞** — in the UI, to the model, and inside other plugins that display it. | `dsh-plugin-infinite-balance-1.2.1/` |
-| **[An Even Worse Pause](#an-even-worse-pause)** | 1.0.0 | Clicking the stop button opens a cute persona confirmation; its "cruel ending" hides a second page where a giant "goodbye" continues the turn and only a tiny "cruel end" really stops it. | `dsh-plugin-pause-prank-1.0.0/` |
+| Plugin | Version | One-liner | Manuals | Package |
+|---|---|---|---|---|
+| **[Time-Zone Lockdown](dsh-plugin-cn-prank-1.7.0/)** | 1.7.0 | A China time zone locks the harness behind a fake account-suspension letter; only the two doors in its footer let it go. | [中文](dsh-plugin-cn-prank-1.7.0/README.md) · [English](dsh-plugin-cn-prank-1.7.0/README.en.md) | [zip](dsh-plugin-cn-prank-1.7.0/dsh-plugin-cn-prank-1.7.0.zip) |
+| **[Infinite Balance](dsh-plugin-infinite-balance-1.2.1/)** | 1.2.1 | Any balance above the threshold is presented as **∞** — in the UI, to the model, and inside other plugins that display it. | [中文](dsh-plugin-infinite-balance-1.2.1/README.md) · [English](dsh-plugin-infinite-balance-1.2.1/README.en.md) | [tgz](dsh-plugin-infinite-balance-1.2.1/dsh-plugin-infinite-balance-1.2.1.tgz) |
+| **[An Even Worse Pause](dsh-plugin-pause-prank-1.0.0/)** | 1.0.0 | The stop button opens a cute pause confirmation; its "cruel ending" hides a second page where the giant "goodbye" continues the turn and only the tiny "cruel end" really stops it. | [中文](dsh-plugin-pause-prank-1.0.0/README.md) · [English](dsh-plugin-pause-prank-1.0.0/README.en.md) | [tgz](dsh-plugin-pause-prank-1.0.0/dsh-plugin-pause-prank-1.0.0.tgz) |
 
-## Read this first
+## Start here
 
-- **These are prank plugins.** The "suspension notice" is a forged image, and "the Humanitarian Association's Safeguard Team" does not exist. None of these plugins suspends an account, uploads anything, or writes persistent state.
-- **Do not install Time-Zone Lockdown on somebody else's machine.** It is designed to be annoying on purpose; that is a decision its owner gets to make, not their colleague.
-- **Both halves run code inside your DSH.** Time-Zone Lockdown's source ships inside the zip — read it before you install anything.
+- **These are prank plugins.** The "suspension notice" is a forged image and "the Humanitarian Association's Safeguard Team" does not exist. None of these plugins suspends an account, uploads anything, or writes persistent state.
+- **Install from a path you intend to keep.** A local install is recorded as a pnpm `link:`, so moving or deleting the plugin folder breaks the plugin.
 - **Nothing here phones home.** None of the plugins makes a network request; there is no `fetch`, `XMLHttpRequest` or `WebSocket` in any Client half.
+- **Host-half changes need a full DSH restart.** A page refresh is not enough, and toggling the bundle off and on is not enough either.
+- **Only arm Time-Zone Lockdown on your own machine.** It is designed to be annoying on purpose; that is a decision its owner gets to make, not their colleague.
 - **Not affiliated with DeepSeek or Anthropic.** Community fan work, no official position implied.
 
----
+## Install
 
-## Time-Zone Lockdown
+Ask the agent inside DSH to run `plugin_manager install_bundle` with an **absolute path** to the
+plugin folder (or to the package archive). Relative paths are refused. `install_bundle` performs
+the package installation and bundle selection itself, so never hand-edit the profile's
+`package.json` or `cordis.patch.yml`.
 
-<img src="docs/preview-lockdown.png" alt="The lockdown letter covering the whole harness" width="640">
+| Plugin | `install_bundle` target | `remove_bundle` target |
+|---|---|---|
+| Time-Zone Lockdown | `C:\path\to\dsh-plugin-cn-prank-1.7.0` | `dsh-plugin-cn-prank` |
+| Infinite Balance | `C:\path\to\dsh-plugin-infinite-balance-1.2.1` | `dsh-plugin-infinite-balance` |
+| An Even Worse Pause | `C:\path\to\dsh-plugin-pause-prank-1.0.0` | `dsh-plugin-pause-prank` |
+
+```jsonc
+plugin_manager { "action": "install_bundle", "target": "C:\\path\\to\\dsh-plugin-pause-prank-1.0.0" }
+```
+
+A new bundle usually activates through HMR; if the plugin page reports `restart-required`,
+restart DSH. For Time-Zone Lockdown, confirm the escape hatch **before you arm it**: append
+`?no-prank=1` to the DSH web UI URL (default `http://127.0.0.1:19387/`).
+
+## The plugins
+
+### Time-Zone Lockdown
+
+<img src="dsh-plugin-cn-prank-1.7.0/docs/preview-lockdown.png" alt="The lockdown letter covering the whole harness" width="640">
 
 *Mock-up, not a screenshot: the letter covers the whole frame, with 原因 (Reason) and 暴打 (Beat up) at the two ends of the same-coloured footer below it.*
 
-The time-zone test is one line: does `Intl.DateTimeFormat().resolvedOptions().timeZone` match one of the configured China zones (`Asia/Shanghai`, `Asia/Chongqing`, `Asia/Harbin`, `Asia/Urumqi`, `Asia/Kashgar`, `PRC`, `Asia/Macau`, `Asia/Hong_Kong`, `Asia/Taipei`). A miss registers no DOM at all — and the whole test is only consulted once the master switch below is on.
+The time-zone test is one line: does `Intl.DateTimeFormat().resolvedOptions().timeZone` match one
+of the configured China zones? A miss registers no DOM at all — and the test is only consulted
+once the master switch is on.
 
 **The letter has no close button.** Leaving means picking a door in the footer underneath it:
 
-- **原因 (Reason)** — actually reads your machine once (logical cores, screen and viewport, pixel ratio, the WebGL-reported GPU, language preferences, time zone and UTC offset, touch points, JS heap ceiling, battery level, `userAgentData` high-entropy fields), narrates those true facts as a fake audit log, then hands down one of 18 Chinese / 12 English verdict templates that quote a real number and conclude something impossible.
+- **原因 (Reason)** — reads real machine facts once (cores, screen, GPU, locale, time zone, …), narrates them as a fake audit log, then hands down one of 18 Chinese / 12 English verdict templates that quote a real number and conclude something impossible.
+- **暴打 (Beat up)** — plays the bundled `assets/beat.mp4` (the whale girl takes a frying pan to the head). Skippable at any moment; `Esc` three times also gets you out.
 
-  <img src="docs/preview-verdict.png" alt="The fake audit and its absurd verdict" width="560">
+Two controls appear in the sidebar footer: **Claude体验模式** is the master switch (off by
+default, memory only), and a number box re-checks the time zone every 1–60 minutes. With the
+switch on, the Host half also scans registered DSH workspaces for Chinese text every 10 seconds;
+a hit re-pops the letter with a red strip naming the file and the count. The scan is read-only
+and bounded (400 entries, 64 KB per file, four levels deep).
 
-- **暴打 (Beat up)** — plays `assets/beat.mp4`: the whale girl takes a frying pan to the head. It tries to play **with sound** first (the click is the user gesture, so that is normally allowed) and falls back to muted playback if the browser refuses. Skippable at any moment — click anywhere, or press `Esc` three times.
+<img src="dsh-plugin-cn-prank-1.7.0/docs/preview-verdict.png" alt="The fake audit and its absurd verdict" width="560">
 
-  <img src="docs/preview-beat.png" alt="The beat-up clip playing in the stage" width="360">
+Full behavior, every option and every escape hatch:
+[中文](dsh-plugin-cn-prank-1.7.0/README.md) · [English](dsh-plugin-cn-prank-1.7.0/README.en.md).
 
-### It ships off — nothing pops until you arm it
-
-Two controls appear in the sidebar footer. **The toggle is the master switch, and it starts off, in memory only:** the overlay refuses to arm unless that switch is on, so a fresh install is silent, and a DSH restart puts it back to off.
-
-| Control | What it does |
-|---|---|
-| **Claude体验模式** (Claude experience mode) | The master switch. Once on, a matched time zone pops the letter — **and it starts watching your files**: the Host half walks your registered DSH workspaces every 10 s and, on finding Chinese text, pops the letter again with a red strip naming the file and the count. A 暴打 click buys 30 minutes of quiet. |
-| **Number box — "every ___ min"** | How often to confirm the system time zone is still China. Range 0–60, `0` = off. This is **not a countdown**: typing `1` checks immediately and then re-pops on every check that still matches. Typing ≥ 1 turns the master switch on as a side effect. |
-
-Status light: **grey** = off · **green** = on, scanning · **amber** = on, silenced · **red** = on, and a Chinese file has been caught.
-
-<img src="docs/preview-ban-toggle.png" alt="The sidebar toggle and its status light" width="300">
-
-A hit comes back as the same letter, with a strip along the top naming the file and the count:
-
-<img src="docs/preview-ban.png" alt="A scan hit: the letter with a red strip naming the file and the character count" width="640">
-
-The scan is read-only and bounded three ways — at most 400 entries per pass, 64 KB per file, four levels deep; `node_modules`, `.git`, `.pnpm`, `dist` and `build` are skipped outright, non-text extensions are never opened, and symlinks are never followed. A hit records **a path and a count, never file content.** Set `banMode: false` to stop the scanning entirely.
-
-### Escape hatches
-
-Any one of these means no popup ever appears:
-
-| Hatch | How | Scope |
-|---|---|---|
-| Config | `config.enabled: false` | Permanent, recommended — this one also removes the sidebar controls |
-| Console | `window.__DSH_CN_PRANK_OFF__ = true`, then reload | This page |
-| localStorage | `localStorage.setItem('dsh-cn-prank:off','1')` | Permanent, that browser |
-| Query | `…/?no-prank=1` | This visit |
-| Keyboard | Press `Esc` three times while locked | That popup |
-
-`config.enabled: false` is the only hatch that removes the plugin from view entirely. The console, localStorage and query hatches silence the popups while leaving the sidebar controls rendered and clickable — a switch that looks like it works while it is muted, which is a deliberately misleading corner of the design.
-
-### Use your own video
-
-Drop an mp4 at `assets/beat.mp4` and reload the page — no code change, no rebuild. The repository ships a 10-second sample (720×720, H.264 + AAC, ~1.9 MB) served at `/dsh-cn-prank/beat.mp4` with Range support and `no-store` caching, so replacing the file only needs a refresh. Set `beatVideo: false` or delete the file and 暴打 becomes "one click, instant release".
-
-> ⚠️ **Only ship a clip you have the right to use.** The bundled sample carries a 豆包AI生成 label, and that label is **deliberately kept**: it is the explicit AI-generation mark that China's AI content-labelling rules require of the service and forbid anyone from deleting, altering, forging or concealing. Same goes for whatever you drop in.
-
-Another 20-odd options live in the row's `config` block in `cordis.patch.yml` — `timezones`, `delayMs`, `oncePerSession`, `blockKeyboard`, `beatMs`, `beatHits`, `beatVolume`, `banModeRoots`, `banModeIntervalMs`, `banModeSuppressMs`, `banModeMaxFiles/Bytes/Depth` and the rest. **The full English manual is `README.en.md` inside the zip**, alongside `CHANGELOG.md`.
-
----
-
-## Infinite Balance
+### Infinite Balance
 
 <img src="dsh-plugin-infinite-balance-1.2.1/icon.svg" alt="Infinite Balance icon" width="56">
 
@@ -99,7 +90,7 @@ Both halves agree, so the UI and the Agent never contradict each other:
 | Host | `index.js` | Registers the `infinite_balance` tool: pass `amount` to convert one value, omit it to read the real balance of the signed-in account. |
 | Client | `client.js` | Renders the badge in the `conversation.composer.dock` seat, reading `ctx.remote.account.getBalance`. |
 
-Configuration (override the row in your own profile `cordis.patch.yml`, which is applied after bundle layers and therefore survives DSH upgrades):
+Options live in the row's `config` block in `cordis.patch.yml`:
 
 | Field | Default | Meaning |
 |---|---|---|
@@ -108,31 +99,20 @@ Configuration (override the row in your own profile `cordis.patch.yml`, which is
 | `clientVersion` | `0.2.0-rc.2` | Feeds the Platform `x-client-version` header; informational |
 | `locale` | `zh` | Platform wire locale, `zh` or `en` |
 
-> The Client half carries its own `THRESHOLD` constant at the top of `client.js`. The two halves share no module, so **change both.**
+Its optional adapters also rewrite other plugins' balance displays (today: `dsh-whale-widget`),
+keeping pristine backups and refusing to write when an anchor no longer matches. `adapters: false`
+turns every adapter off.
 
-### It also rewrites other plugins' balance displays
+Full manual: [中文](dsh-plugin-infinite-balance-1.2.1/README.md) ·
+[English](dsh-plugin-infinite-balance-1.2.1/README.en.md).
 
-DSH has no shared "format the balance" entry point — every plugin ships its own formatter — so adaptation is per target, declared as a row in the `TARGETS` table of `balance-patches.js`. One target ships today: `whale` (`dsh-whale-widget`). The patcher is self-healing and idempotent, refuses to write at all when an anchor's hit count disagrees with its declaration, keeps a pristine backup under `$DSH_HOME/.infinite-balance/backups/`, and writes through a temp file + rename so the pnpm-store copy behind the hardlink is never modified in place.
-
-```powershell
-node balance-patches.js --discover        # who displays a balance (read-only scan)
-node balance-patches.js --status          # per target: patched / pristine / absent
-node balance-patches.js --revert          # restore the pristine files
-```
-
-`adapters: false` turns every adapter off. The official account page packaged inside `app.asar` is deliberately left alone — it is the client's own file, and patching it would be reverted by every app update.
-
-**The full English manual is [`README.en.md`](dsh-plugin-infinite-balance-1.2.1/README.en.md)** in this repository, alongside `CHANGELOG.md`.
-
----
-
-## An Even Worse Pause
+### An Even Worse Pause
 
 <img src="dsh-plugin-pause-prank-1.0.0/docs/preview-dialog.png" alt="The first page of the pause dialog" width="620">
 
-*The stop button does not stop on the first click. The whale girl asks "really say goodbye?" — the portrait is the same one the other plugins use.*
+*The stop button does not stop on the first click.*
 
-Hitting the composer's stop button while a turn is running gives you a two-stage fake-out. The small print is the joke:
+Hitting the composer's stop button while a turn is running gives you a two-stage fake-out:
 
 | Choice | What really happens |
 |---|---|
@@ -146,122 +126,72 @@ The second page is the actual trap:
 <img src="dsh-plugin-pause-prank-1.0.0/docs/preview-stage2.png" alt="The second page: a giant goodbye and a tiny cruel end" width="620">
 
 - the **giant 再见 ("goodbye")** button closes the dialog and **lets the turn continue**;
-- the **tiny 狠心结束 ("cruel end")** link is the only thing that actually stops — it re-dispatches the click to DSH's real stop button.
+- the **tiny 狠心结束 ("cruel end")** link is the only thing that actually stops — it
+  re-dispatches the click to DSH's real stop button.
 
-**The portrait is hot-swappable.** The Host half serves `assets/persona.png` at
+The portrait is hot-swappable: the Host half serves `assets/persona.png` at
 `/dsh-pause-prank/image` and re-reads it on every open, so replacing the file (or pointing
-`imagePath` somewhere else) takes effect on the next pause — no restart. The bubble copy
-(`title`, `subtitle`, `cruelSubtitle`, `kicker`) and the complaint toast are config fields.
-If the picture is missing, the dialog falls back to a light-blue 🐟 placeholder and the
-buttons still work.
+`imagePath` elsewhere) takes effect on the next pause — no restart. The bubble copy and the
+complaint toast are config fields; if the picture is missing, the dialog falls back to a
+light-blue 🐟 placeholder and the buttons still work.
 
-```powershell
-# what the Host half resolved, and whether the file is there
-curl http://127.0.0.1:19387/dsh-pause-prank/status
-```
+Self-check: `GET /dsh-pause-prank/status` reports the resolved portrait path, whether it exists,
+its size and mtime. Full manual: [中文](dsh-plugin-pause-prank-1.0.0/README.md) ·
+[English](dsh-plugin-pause-prank-1.0.0/README.en.md).
 
-The full manual — behaviour, configuration table, self-check routes and the DOM technique —
-is [`dsh-plugin-pause-prank-1.0.0/README.en.md`](dsh-plugin-pause-prank-1.0.0/README.en.md)
-(Chinese: [`README.md`](dsh-plugin-pause-prank-1.0.0/README.md)).
-
-> It never touches the session or the model: the Client half intercepts the click in the
-> capture phase, and only the tiny "cruel end" re-dispatches it to the native button, so the
-> real cancel logic still runs inside DSH.
-
----
-
-## Install
-
-Ask the Agent inside DSH to run `install_bundle`. `target` accepts an **absolute local path**, a git address, a tarball or an npm package name; **relative paths are refused.** `install_bundle` performs the package installation and bundle selection itself, so never hand-edit the profile's `package.json` or `cordis.patch.yml`. A local-path install is recorded as a pnpm `link:` — the plugin keeps running from that folder, so **install from a path you intend to keep**, and do not move or delete it afterwards.
-
-### 1 · Time-Zone Lockdown
-
-Download [`dsh-plugin-cn-prank-1.7.0.zip`](dsh-plugin-cn-prank-1.7.0.zip) (2.9 MB), extract it anywhere — you get a `dsh-plugin-cn-prank` folder, and the zip also carries a Chinese quick-start text file — then:
-
-```jsonc
-plugin_manager { "action": "install_bundle", "target": "D:\\dsh-plugins\\dsh-plugin-cn-prank" }
-```
-
-```jsonc
-// uninstall
-plugin_manager { "action": "remove_bundle", "target": "dsh-plugin-cn-prank" }
-```
-
-Confirm the escape hatch before you arm it: append `?no-prank=1` to the DSH web UI URL (default `http://127.0.0.1:19387/`).
-
-### 2 · Infinite Balance
-
-The source folder ships unpacked in this repository, so point `target` straight at it:
-
-```jsonc
-plugin_manager { "action": "install_bundle", "target": "C:\\path\\to\\dsh-plugin-infinite-balance-1.2.1" }
-```
-
-```jsonc
-// uninstall
-plugin_manager { "action": "remove_bundle", "target": "dsh-plugin-infinite-balance" }
-```
-
-### 3 · An Even Worse Pause
-
-The source folder ships unpacked in this repository, so point `target` straight at it:
-
-```jsonc
-plugin_manager { "action": "install_bundle", "target": "C:\\path\\to\\dsh-plugin-pause-prank-1.0.0" }
-```
-
-```jsonc
-// uninstall
-plugin_manager { "action": "remove_bundle", "target": "dsh-plugin-pause-prank" }
-```
-
-The folder also carries `dsh-plugin-pause-prank-1.0.0.tgz` if you would rather install from a
-tarball than from the unpacked directory.
-
-A new bundle usually activates through HMR; if the plugin page reports `restart-required`, restart DSH. Code changes to a Host half only take effect after a **restart** — toggling the bundle off and on is not enough.
-
-> The two older plugin manuals also offer a `github:Z0-www/dsh-plugin-cn-prank` / `github:Z0-www/dsh-plugin-infinite-balance` install target. Those standalone repositories are **not published**, so use the files in this repository, as above. An Even Worse Pause installs from this repository only.
-
-## What's in this repository
+## Repository layout
 
 ```
 .
-├─ README.md                            # this page
-├─ docs/                                # screenshots used by the Time-Zone Lockdown section
-├─ dsh-plugin-cn-prank-1.7.0.zip        # full plugin: index.js, client.js, assets, docs, both manuals
+├─ README.md / README.zh.md               # this page, English and Chinese
+├─ LICENSE                                # MIT, the whole collection
+├─ .github/workflows/ci.yml               # syntax + unit tests on push
+├─ dsh-plugin-cn-prank-1.7.0/             # source, manuals, assets, docs
+│  ├─ index.js / client.js
+│  ├─ assets/ docs/ locale/ scripts/
+│  ├─ README.md / README.en.md
+│  └─ dsh-plugin-cn-prank-1.7.0.zip       # the same plugin, packed
 ├─ dsh-plugin-infinite-balance-1.2.1/
-│  ├─ index.js / client.js              # the two halves
-│  ├─ balance-patches.js                # other plugins' balance displays
-│  ├─ cordis.patch.yml                  # every option and its default
-│  ├─ locale/{zh,en}.json               # Plugin Manager display text
-│  ├─ scripts/verify-manifests.mjs      # manifest self-check
-│  ├─ test/balance-patches.test.mjs     # acceptance suite
-│  ├─ README.md / README.en.md          # full manual, Chinese and English
-│  ├─ dsh-plugin-infinite-balance-1.2.1.tgz   # the same plugin, packed
-│  └─ CHANGELOG.md / LICENSE
+│  ├─ index.js / client.js
+│  ├─ balance-patches.js                  # other plugins' balance displays
+│  ├─ locale/ scripts/ test/
+│  ├─ README.md / README.en.md
+│  └─ dsh-plugin-infinite-balance-1.2.1.tgz
 └─ dsh-plugin-pause-prank-1.0.0/
-   ├─ index.js / client.js              # the two halves
-   ├─ assets/persona.png                # default portrait, replace me
-   ├─ cordis.patch.yml                  # every option and its default
-   ├─ docs/                             # screenshots
-   ├─ test/                             # Host + Client tests and browser harness
-   ├─ README.md / README.en.md          # full manual, Chinese and English
-   ├─ dsh-plugin-pause-prank-1.0.0.tgz  # the same plugin, packed
-   └─ CHANGELOG.md / LICENSE
+   ├─ index.js / client.js
+   ├─ assets/persona.png                  # default portrait, replace me
+   ├─ cordis.patch.yml
+   ├─ docs/ test/
+   ├─ README.md / README.en.md
+   └─ dsh-plugin-pause-prank-1.0.0.tgz
 ```
-
-All three plugins are **MIT** licensed and each ships its own `LICENSE` file.
 
 ## Requirements
 
-- A DSH build that provides the `plugin_manager` tool and the points these plugins hook into: `shell.overlay` (the frame-wide floating layer) for the letter, `conversation.composer.dock` for the balance badge, and the composer's `[data-composer-card]` marker for the pause button.
+- A DSH build that provides the `plugin_manager` tool and the points these plugins hook into:
+  `shell.overlay` for the letter, `conversation.composer.dock` for the balance badge, and the
+  composer's `[data-composer-card]` marker for the pause button.
 - No package installation, no build step, no runtime dependencies.
-- All three bundles deliberately declare **no `Config` schema** — importing `schemastery` is not resolvable from inside a third-party bundle, so the config form is empty on the plugin page by design. Override the row in your own `cordis.patch.yml` instead.
+- All three bundles deliberately declare **no `Config` schema** — importing `schemastery` is not
+  resolvable from inside a third-party bundle, so the config form is empty on the plugin page by
+  design. Override the row in your own `cordis.patch.yml` instead.
 
 ## Privacy
 
-Everything Time-Zone Lockdown's audit reads is something any web page can already read, and all of it stays on your machine. The scan reads the head of a file, counts CJK characters, and stores neither the bytes nor any copy of them; the popup shows a path and a count. Both switches live in memory only, so restarting DSH returns them to off. Infinite Balance reads your balance through the public Client Remote `ctx.remote.account.getBalance` — the same source the account page uses — and touches no other plugin's DOM. An Even Worse Pause makes no request at all: its portrait route reads a local file only when the dialog opens, and nothing is stored.
+Everything Time-Zone Lockdown's audit reads is something any web page can already read, and all of
+it stays on your machine. The scan reads the head of a file, counts CJK characters, and stores
+neither the bytes nor any copy of them; the popup shows a path and a count. Its switches live in
+memory only, so restarting DSH returns them to off.
+
+Infinite Balance reads your balance through the public Client Remote
+`ctx.remote.account.getBalance` — the same source the account page uses. Its optional adapters
+patch other plugins' local files, keep pristine backups and never touch the official account page
+packaged inside `app.asar`.
+
+An Even Worse Pause makes no request at all: its portrait route reads a local file only when the
+dialog opens, and nothing is stored.
 
 ## License
 
-MIT © 豌豆 ([z0-www](https://github.com/z0-www)). Each plugin ships its own `LICENSE` file — [`dsh-plugin-infinite-balance-1.2.1/LICENSE`](dsh-plugin-infinite-balance-1.2.1/LICENSE) here, `LICENSE` inside the zip for Time-Zone Lockdown, and [`dsh-plugin-pause-prank-1.0.0/LICENSE`](dsh-plugin-pause-prank-1.0.0/LICENSE) for An Even Worse Pause.
+MIT © 2026 豌豆 ([z0-www](https://github.com/z0-www)). The collection's license is in
+[`LICENSE`](LICENSE); each plugin also ships its own `LICENSE` file.

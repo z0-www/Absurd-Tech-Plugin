@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Time-Zone Lockdown",
+    "description": "When the browser time zone is inside China, a fake account-restored letter locks the whole harness until you clear it with 原因 or 暴打."
+  }
+}

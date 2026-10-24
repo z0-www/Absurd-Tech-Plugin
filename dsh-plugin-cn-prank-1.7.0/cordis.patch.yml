@@ -1,0 +1,110 @@
+# Inserted by this bundle's patch. The row id is unique across the profile, and
+# every value below can be overridden from your own `cordis.patch.yml`, which is
+# applied after bundle layers and survives DSH upgrades.
+- insert:
+    - id: cn-prank
+      name: dsh-plugin-cn-prank
+      config:
+        # 总开关。false = 这个插件什么都不做（也是唯一的“体面退出”方式）。
+        # Master switch. false = this bundle does nothing at all.
+        enabled: true
+
+        # 会触发封锁的 IANA 时区。浏览器报告 Asia/Shanghai 等即命中。
+        # IANA zones that arm the lockdown. The browser reporting one of these
+        # (Intl.DateTimeFormat().resolvedOptions().timeZone) is the whole gate.
+        timezones:
+          - Asia/Shanghai
+          - Asia/Chongqing
+          - Asia/Harbin
+          - Asia/Urumqi
+          - Asia/Kashgar
+          - PRC
+          - Asia/Macau
+          - Asia/Hong_Kong
+          - Asia/Taipei
+
+        # 页面加载后多久弹出。留一点时间让界面先渲染出来,不然会看到半截 DOM。
+        # Delay before the letter shows, so the frame has time to paint first.
+        delayMs: 900
+
+        # true = 每个浏览器会话只弹一次(sessionStorage);false = 每次刷新都弹。
+        # 默认 true:点掉之后一刷新又挨一次,感觉像卸载不掉 —— 恶作剧要能收场。
+        # true = once per browser session; false = every single page load. Defaults
+        # to true because being re-locked by a plain reload reads as "cannot uninstall".
+        oncePerSession: true
+
+        # 封锁期间吞掉所有键盘事件（Ctrl+K、Esc 之类一律无效）。按钮仍可用鼠标点。
+        # Swallow every keyboard event while the letter is up. Mouse still works.
+        blockKeyboard: true
+
+        # 假扫描的时长上限(毫秒)。实际时长还受扫描行数影响。
+        # Upper bound of the fake audit, in milliseconds.
+        scanMs: 4200
+
+        # 裁定书显示后自动放行前的等待(0 = 必须自己点按钮)。
+        # Auto-release delay after the verdict shows; 0 = the human must click.
+        reasonAutoCloseMs: 0
+
+        # 点「暴打」后敲打大肥鱼动画的总时长;0 = 退回「点一下立刻放行」。
+        # Length of the beat-the-fat-fish animation; 0 = release immediately.
+        beatMs: 3200
+
+        # 这段动画一共敲几下(1-999)。只负责进度条和「已敲打 N 次」那句话。
+        # How many hits the progress bar counts (1-999).
+        beatHits: 9
+
+        # 点「暴打」时播放 assets/beat.mp4(随包发布,由 Host 半侧经
+        # /dsh-cn-prank/beat.mp4 按需下发,支持 Range)。它是**唯一的**动画:文件不在,
+        # 或者这里设成 false,点「暴打」就立刻放行,不再有第二段兜底动画。
+        # Play assets/beat.mp4 for 暴打 (shipped in this package, served on demand by
+        # the Host half). It is the **only** animation: with the file absent, or with
+        # this set to false, 暴打 releases immediately — there is no second fallback.
+        beatVideo: true
+
+        # ── 声音 ────────────────────────────────────────────────────────────────
+        # assets/beat.mp4 自带一条 AAC 音轨。带声自动播放通常被允许(点「暴打」就是
+        # 一次用户手势);万一被拒,插件会退回静音播放并在舞台上说明,不会卡住画面。
+        # beatVolume = 那条音轨的音量;beatMuted = true 则永远静音。
+        # The clip carries its own AAC track. Unmuted autoplay is normally allowed —
+        # the 暴打 click is the user gesture — and a refusal falls back to muted.
+        beatVolume: 0.9
+        beatMuted: false
+
+        # 合成打击音效(白噪声 + 下滑正弦,不带音频文件),叠在视频之上。
+        # 默认关:视频自带一条 AAC 音轨,再叠一层只会糊在一起 —— 你的视频是静音的
+        # 时候才需要打开它。1.7.0 起这是合成器唯一的用途(`beatSfx` 已随矢量动画删除)。
+        # Synthesised hit effects (white noise + a falling sine, no audio files) layered
+        # over the clip. Off by default: the clip carries its own track. Turn it on when
+        # your clip is silent — since 1.7.0 this is the synth's only job.
+        beatSfxOverVideo: false
+        beatSfxVolume: 0.5
+
+        # ── Claude体验模式 ────────────────────────────────────────────────────────────
+        # 扫描能力开关。false = 永不读盘、永远不会命中;那颗按钮和状态路由**仍然在**
+        # (它是整个插件的总开关),状态文档里的 `scans` 变成 false,客户端据此把灯
+        # 画成暗灰的「扫不了」,而不是绿的「正在扫」。
+        # The scanning ability. false = never reads the disk, never hits. The sidebar
+        # button and the status route **stay** (that button is the plugin's master
+        # switch); the status doc then reports `scans: false`, which is what the client
+        # reads to paint the light dim grey ("cannot scan") instead of green.
+        banMode: true
+
+        # 扫描哪些目录。留空 = 用 DSH 里已登记的工作区(而不是整个家目录)。
+        # Directories to scan. Empty = the registered DSH workspaces, not your home.
+        banModeRoots: []
+
+        # 多久扫一遍(毫秒)。
+        # Scan interval, in milliseconds.
+        banModeIntervalMs: 10000
+
+        # 点「暴打」买到的静默时长。默认 30 分钟。
+        # The silence a 暴打 click buys. 30 minutes by default.
+        banModeSuppressMs: 1800000
+
+        # 一轮扫描的上限:最多看多少个文件、单个文件最多读多少字节、往下钻几层。
+        # 扫描是只读的,而且只在Claude体验模式开着时才跑。
+        # Per-pass caps. The scan is read-only and only runs while Claude experience mode is on.
+        banModeMaxFiles: 400
+        banModeMaxBytes: 65536
+        banModeMaxDepth: 4
+

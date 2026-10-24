@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="zh">
+  <!--
+    预览渲染台 · preview harness
+
+    这不是插件的一部分,只是给 `scripts/make-previews.mjs` 用的一个静态页面:它把
+    `client.js` 里的 `STYLE` 原样抄了一遍,再用 Edge 无头模式截图,
+    于是 README 里的几张图是**真浏览器渲染**出来的,而不是手画的近似图。
+
+    抄写是刻意的(harness 不能 import 一个 `window.__ModuleLoader__` 包),代价是改
+    `client.js` 的样式时要一起改这里。它**随包发布**(`package.json` 的 `files` 里
+    逐条列了它),好让拿到 tarball 的人也能重画这几张图 —— 之前那句「不参与打包」
+    是错的,因为 `files` 当时写的是整个 `scripts/` 目录。
+  -->
+  <head>
+    <meta charset="utf-8" />
+    <title>cn-prank preview harness</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; }
+      body {
+        background: #1c1e22;
+        font-family: "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+        overflow: hidden;
+      }
+
+      /* 被盖住的那个界面:只画到「看得出是个应用」为止。 */
+      .app { position: fixed; inset: 0; }
+      .app .sidebar { position: absolute; inset: 0 auto 0 0; width: 300px; background: #17181b; }
+      .app .topbar { position: absolute; inset: 0 0 auto 300px; height: 56px; background: #202226; border-bottom: 1px solid #2c2f35; }
+      .app .rows { position: absolute; left: 352px; top: 170px; display: flex; flex-direction: column; gap: 30px; }
+      .app .row { height: 14px; border-radius: 7px; background: rgba(255, 255, 255, 0.12); }
+      .app .brand { position: absolute; left: 24px; top: 74px; width: 126px; height: 22px; border-radius: 6px; background: rgba(255, 255, 255, 0.55); }
+      .app .nav { position: absolute; left: 22px; top: 96px; display: flex; flex-direction: column; gap: 22px; }
+      .app .nav i { display: block; height: 12px; border-radius: 6px; background: rgba(255, 255, 255, 0.2); }
+      .app .composer {
+        position: absolute; left: 352px; right: 120px; top: 640px; height: 160px;
+        border-radius: 18px; background: #2a2d33;
+      }
+      .app .composer i { position: absolute; left: 24px; top: 28px; width: 324px; height: 14px; border-radius: 7px; background: rgba(255, 255, 255, 0.16); }
+      .app .composer b { position: absolute; right: 24px; bottom: 16px; width: 44px; height: 40px; border-radius: 10px; background: #4a4f58; }
+      /* 侧边栏页脚那个 Claude体验模式 开关,与 client.js 的 STYLE.sidebarAction 对应。 */
+      .app .ban-toggle { position: absolute; left: 12px; right: 12px; bottom: 16px; display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 8px; border-radius: 8px; color: #e6e8ec; font-size: 13px; line-height: 20px; }
+      .app .ban-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #d93a3a; box-shadow: 0 0 6px #d93a3a; }
+      .app .ban-dot.off { background: #8b929c; box-shadow: none; }
+      /* 复查间隔那一行:一个能直接打字的数字框,外面套「每 ___ 分钟」。与 client.js 的
+         STYLE.timerBlock / timerHead / timerInput 对应。 */
+      .app .ban-block { position: absolute; left: 12px; right: 12px; bottom: 56px; padding: 2px 8px 4px; }
+      .app .ban-head { display: flex; align-items: center; justify-content: flex-start; gap: 6px; color: #e6e8ec; font-size: 13px; line-height: 20px; }
+      .app .ban-input {
+        width: 58px; padding: 1px 6px; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 6px;
+        background: rgba(255, 255, 255, 0.06); color: #f5c451; font: inherit; font-size: 13px;
+        line-height: 18px; font-variant-numeric: tabular-nums; text-align: center; outline: none;
+      }
+
+      /* ---- 以下与 client.js 的 STYLE 一一对应 ---- */
+      .backdrop {
+        position: fixed; inset: 0; z-index: 9000;
+        display: flex; align-items: center; justify-content: center;
+        padding: 16px;
+        background: rgba(4, 5, 7, 0.86);
+        backdrop-filter: blur(6px);
+        pointer-events: auto; user-select: none;
+      }
+      .card {
+        display: flex; flex-direction: column;
+        border-radius: 14px; overflow: hidden;
+        width: min(92vw, 560px, 62vh);
+        background: #1f2125;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.66), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      }
+      /* 图片与所有面板共用的定位框;页脚在它外面,所以面板盖不住两个出口。 */
+      .frame { position: relative; }
+      .frame > img.notice { display: block; width: 100%; height: auto; user-select: none; pointer-events: none; }
+      .footer { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 14px 11px; background: #1f2125; }
+      .corner {
+        font: inherit; font-size: 13px; line-height: 18px;
+        padding: 7px 14px; border-radius: 9px; cursor: pointer;
+      }
+      .corner.reason { color: rgba(255, 255, 255, 0.82); background: rgba(22, 24, 28, 0.88); border: 1px solid rgba(255, 255, 255, 0.28); }
+      .corner.beat { color: #fff; font-weight: 600; background: #c9302c; border: 1px solid #e05a52; box-shadow: 0 4px 14px rgba(201, 48, 44, 0.42); }
+
+      /* Claude体验模式命中时压在信纸顶端的那条窄带,与 client.js 的 STYLE.banStrip 对应。 */
+      .ban-strip { position: absolute; top: 0; left: 0; right: 0; z-index: 5; padding: 6px 12px; font-size: 11px; line-height: 16px; letter-spacing: 0.02em; color: #ffdede; background: rgba(150, 26, 26, 0.94); border-bottom: 1px solid rgba(255, 255, 255, 0.14); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+      .panel { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; gap: 10px; padding: 16px 16px 14px; background: #0a0b0f; color: rgba(233, 236, 241, 0.92); overflow: auto; }
+      .panel .body { display: flex; flex-direction: column; gap: 10px; margin: auto 0; }
+      .panel .head { flex: none; font-size: 13px; font-weight: 600; color: #f5c451; }
+      .panel .row { font-size: 12px; line-height: 19px; }
+      .panel .key { color: rgba(245, 196, 81, 0.9); margin-right: 6px; }
+      .panel .note { font-size: 11px; line-height: 17px; color: rgba(255, 255, 255, 0.42); border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 8px; }
+      .panel .accept { flex: none; align-self: flex-start; font: inherit; font-size: 12px; font-weight: 600; color: #111214; background: #f5c451; border: 1px solid #f5c451; border-radius: 8px; padding: 7px 14px; cursor: pointer; }
+
+      /* ---- 敲打舞台 ---- */
+      .stage {
+        position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; gap: 8px; padding: 16px;
+        background: radial-gradient(120% 88% at 50% 0%, #282e48 0%, #090a0d 62%);
+        color: rgba(233, 236, 241, 0.92); overflow: hidden;
+      }
+      .stage .head { flex: none; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+      .stage .title { font-size: 13px; font-weight: 600; letter-spacing: 0.02em; color: #f5c451; }
+      .stage .count { flex: none; font-size: 11px; font-family: ui-monospace, Consolas, monospace; color: rgba(255, 255, 255, 0.5); }
+      .stage .bar { flex: none; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+      .stage .fill { height: 100%; background: #f5c451; }
+      .stage .foot { flex: none; font-size: 11px; line-height: 16px; text-align: center; letter-spacing: 0.03em; color: rgba(255, 255, 255, 0.42); }
+      /* 视频自带浅色底,给它一块同样浅的画框。 */
+      .video-frame { position: relative; flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; background: #f3f4f7; border-radius: 14px; overflow: hidden; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14); }
+      .video-frame video { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="sidebar"></div>
+      <div class="topbar"></div>
+      <div class="brand"></div>
+      <div class="nav">
+        <i style="width: 200px"></i><i style="width: 186px"></i><i style="width: 172px"></i><i style="width: 158px"></i>
+        <i style="width: 144px"></i><i style="width: 130px"></i><i style="width: 116px"></i><i style="width: 102px"></i>
+      </div>
+      <div class="rows">
+        <div class="row" style="width: 430px"></div>
+        <div class="row" style="width: 620px"></div>
+        <div class="row" style="width: 430px"></div>
+        <div class="row" style="width: 300px; background: rgba(255, 255, 255, 0.2)"></div>
+      </div>
+      <div class="composer"><i></i><b></b></div>
+    </div>
+
+    <div class="backdrop">
+      <div class="card" id="card">
+        <div class="frame"><img class="notice" src="../../assets/notice.webp" alt="" /></div>
+      </div>
+    </div>
+
+    <script>
+      ]
+
+      const state = new URLSearchParams(location.search).get('state') ?? 'notice'
+      const card = document.getElementById('card')
+      const frame = card.querySelector('.frame')
+
+      /** 两个出口永远住在图片下面那条同色页脚里,而不是压在图片角上。 */
+      function doors(left, right) {
+        card.insertAdjacentHTML('beforeend', `<div class="footer">${left}${right}</div>`)
+      }
+      const BEAT_DOOR = '<button class="corner beat">暴打</button>'
+
+      if (state === 'notice') {
+        doors('<button class="corner reason">原因</button>', BEAT_DOOR)
+      }
+
+      // Claude体验模式:侧边栏页脚多一个开关,信纸顶上多一条说明它为什么来。
+      if (state === 'ban') {
+        document
+          .querySelector('.app .sidebar')
+          .insertAdjacentHTML('beforeend', '<div class="ban-toggle"><span class="ban-dot"></span><span>Claude体验模式</span></div>')
+        frame.insertAdjacentHTML(
+          'beforeend',
+          '<div class="ban-strip">Claude体验模式 · 在 …/dsh-plugin-cn-prank/README.md 里发现 2148 个中文字符</div>',
+        )
+        doors('<button class="corner reason">原因</button>', BEAT_DOOR)
+      }
+
+      if (state === 'verdict') {
+        frame.insertAdjacentHTML(
+          'beforeend',
+          `<div class="panel">
+            <div class="body">
+              <div class="head">违规裁定书 · TS-9f3a21c4-07bb-4e51-8d20f3aa · 手机号 / 支付型</div>
+              <div class="row"><span class="key">对外</span>无法验证账号归属。</div>
+              <div class="row"><span class="key">内心OS</span>+86?这不是中餐外卖热线吗?我饿了,先封。</div>
+              <div class="note">本次不予强制执行,仅作口头警告。本裁定由大肥鱼亲自签发,不可上诉,但可以被无视。</div>
+            </div>
+          </div>`,
+        )
+        doors('<button class="accept">我认了,立即整改</button>', BEAT_DOOR)
+      }
+
+      // 视频模式:把真实那段 mp4 摆在舞台上,暂停在某一帧。
+      if (state === 'beatvideo') {
+        const at = Number(new URLSearchParams(location.search).get('t') ?? 3)
+        frame.insertAdjacentHTML(
+          'beforeend',
+          `<div class="stage">
+            <div class="head"><span class="title">正在敲打大肥鱼</span><span class="count">已敲打 5/9 次</span></div>
+            <div class="video-frame"><video id="beatvideo" muted playsinline preload="auto" src="../../assets/beat.mp4"></video></div>
+            <div class="bar"><div class="fill" style="width:56%"></div></div>
+            <div class="foot">点击任意处跳过 · 大肥鱼是虚拟的,不会真的受伤</div>
+          </div>`,
+        )
+        doors('<button class="corner reason">跳过</button>', '<button class="corner beat">跳过</button>')
+        const video = document.getElementById('beatvideo')
+        video.addEventListener('loadedmetadata', () => {
+          video.currentTime = at
+        })
+        video.addEventListener('seeked', () => video.pause())
+      }
+      // 侧边栏特写:覆盖层一盖,页脚那个开关就被 86% 的暗幕压得几乎看不见,
+      // 所以状态灯长什么样值得单独出一张图。左边是关,右边是开。
+      if (state === 'sidebar') {
+        document.querySelector('.backdrop').style.display = 'none'
+        // 短窗口里那串假导航会一直铺到底,把页脚盖住 —— 留四条就够示意了。
+        const nav = document.querySelector('.app .nav')
+        while (nav.children.length > 4) nav.removeChild(nav.lastElementChild)
+        const sidebar = document.querySelector('.app .sidebar')
+        sidebar.insertAdjacentHTML(
+          'beforeend',
+          '<div class="ban-block"><div class="ban-head"><span>每</span><input class="ban-input" type="number" min="0" max="60" value="15"><span>分钟</span></div></div>',
+        )
+        sidebar.insertAdjacentHTML('beforeend', '<div class="ban-toggle"><span class="ban-dot off"></span><span>Claude体验模式</span></div>')
+      }
+
+    </script>
+  </body>
+</html>

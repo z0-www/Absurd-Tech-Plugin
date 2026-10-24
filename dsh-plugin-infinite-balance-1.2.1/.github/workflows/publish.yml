@@ -1,0 +1,58 @@
+name: publish
+
+# Publishing is tag-driven: bump the version, commit, then
+#
+#   git tag v1.2.1 && git push origin v1.2.1
+#
+# Authentication is npm Trusted Publishing (OIDC): there is no NPM_TOKEN secret in
+# this repository. Configure it once on npmjs.com — package settings → Trusted
+# Publisher → GitHub Actions, with this repository and the workflow file name
+# `publish.yml`. npm needs a recent CLI for OIDC, hence the global upgrade below.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Use a recent npm (trusted publishing needs >= 11.5.1)
+        run: npm install -g npm@latest
+
+      - name: Syntax check
+        run: npm run check
+
+      - name: Validate manifests
+        run: npm run verify
+
+      - name: Tests
+        run: npm test
+
+      # A mistyped tag must not ship the wrong version.
+      - name: Tag must match package.json
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$version" ]; then
+            echo "tag v$tag does not match package.json version $version" >&2
+            exit 1
+          fi
+          echo "publishing $version"
+
+      # Unscoped names publish public by default; a scoped name would also need
+      # `--access public`. Provenance is attached automatically over OIDC.
+      - name: Publish to npm
+        run: npm publish --provenance

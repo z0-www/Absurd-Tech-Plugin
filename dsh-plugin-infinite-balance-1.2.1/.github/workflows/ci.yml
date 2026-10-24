@@ -1,0 +1,30 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # The bundle ships no dependencies, so no install step is needed anywhere here:
+      # both halves are plain ESM, and the whole "compile check" is parsing them.
+      - name: Syntax check
+        run: npm run check
+
+      - name: Validate manifests
+        run: npm run verify
+
+      # The suite is portable: it builds its own fixtures in a temp directory and only
+      # adds a golden-file check when a real whale install is present (skipped here).
+      - name: Tests
+        run: npm test

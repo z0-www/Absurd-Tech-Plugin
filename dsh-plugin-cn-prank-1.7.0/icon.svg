@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Time-Zone Lockdown">
+  <rect width="64" height="64" rx="14" fill="#111214"/>
+  <circle cx="32" cy="30" r="15" fill="none" stroke="#e5484d" stroke-width="3"/>
+  <path d="M32 19v11l8 5" fill="none" stroke="#e5484d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M22 52h20" stroke="#f5c451" stroke-width="3" stroke-linecap="round"/>
+  <path d="M27 46l-5 6M37 46l5 6" stroke="#f5c451" stroke-width="3" stroke-linecap="round"/>
+</svg>

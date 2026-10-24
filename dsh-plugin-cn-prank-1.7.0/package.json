@@ -1,0 +1,72 @@
+{
+  "name": "dsh-plugin-cn-prank",
+  "version": "1.7.0",
+  "description": "DSH gag bundle: when the browser's time zone is inside China, the whole harness is locked behind a fake account-suspension letter that only two doors in its footer clear — plus a sidebar switch that scans your workspace for Chinese text, and a number box that re-checks the time zone every 1–60 minutes and pops the letter again.",
+  "type": "module",
+  "license": "MIT",
+  "icon": "./icon.svg",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "cordis-plugin",
+    "dsh-plugin",
+    "prank",
+    "gag",
+    "timezone",
+    "overlay",
+    "lockdown",
+    "animation"
+  ],
+  "author": "豌豆 (https://github.com/Z0-www)",
+  "homepage": "https://github.com/Z0-www/dsh-plugin-cn-prank#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Z0-www/dsh-plugin-cn-prank.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Z0-www/dsh-plugin-cn-prank/issues"
+  },
+  "scripts": {
+    "check": "node --check index.js && node --check client.js && node --check scripts/build-notice.mjs && node --check scripts/verify-manifests.mjs && node --check scripts/make-previews.mjs && node --check scripts/test-host-route.mjs && node --check scripts/test-ban-mode.mjs",
+    "test": "node scripts/test-host-route.mjs && node scripts/test-ban-mode.mjs",
+    "verify": "node scripts/verify-manifests.mjs && node scripts/build-notice.mjs --check",
+    "notice": "node scripts/build-notice.mjs",
+    "previews": "node scripts/make-previews.mjs"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "icon.svg",
+    "assets",
+    "docs",
+    "locale",
+    "README.md",
+    "README.en.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "scripts/build-notice.mjs",
+    "scripts/verify-manifests.mjs",
+    "scripts/make-previews.mjs",
+    "scripts/test-host-route.mjs",
+    "scripts/test-ban-mode.mjs",
+    "scripts/preview/harness.html"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  }
+}

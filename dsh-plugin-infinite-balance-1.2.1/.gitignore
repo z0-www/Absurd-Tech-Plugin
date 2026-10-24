@@ -1,0 +1,22 @@
+# Dependencies (a published bundle ships no dependencies, but a local checkout may grow some)
+node_modules/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Build and cache output
+dist/
+build/
+.cache/
+*.tgz
+
+# Logs and OS noise
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp

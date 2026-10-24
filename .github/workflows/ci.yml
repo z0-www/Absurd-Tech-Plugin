@@ -12,6 +12,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Time-Zone Lockdown
+        working-directory: dsh-plugin-cn-prank-1.7.0
+        run: node scripts/verify-manifests.mjs
       - name: An Even Worse Pause
         working-directory: dsh-plugin-pause-prank-1.0.0
         run: |
