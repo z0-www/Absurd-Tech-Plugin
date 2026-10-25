@@ -128,7 +128,8 @@ assert.match(res.body.toString('utf8'), /找不到暂停图/)
 // ── 路径解析:空串走默认、相对路径按插件目录、~ 展开 ──────────────────────
 assert.deepEqual(resolveImagePath({}), { path: assetPath, source: 'default' })
 assert.deepEqual(resolveImagePath({ imagePath: '  ' }), { path: assetPath, source: 'default' })
-const absolute = 'C:/pics/meme.png'
+// `C:/...` is only absolute on Windows; a POSIX runner needs a POSIX path.
+const absolute = process.platform === 'win32' ? 'C:/pics/meme.png' : '/pics/meme.png'
 assert.deepEqual(resolveImagePath({ imagePath: absolute }), { path: absolute, source: 'config' })
 const relative = resolveImagePath({ imagePath: '../meme.png' })
 assert.equal(relative.source, 'config')
